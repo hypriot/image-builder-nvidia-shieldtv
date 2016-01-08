@@ -9,23 +9,28 @@ fi
 # Build SD card image
 HYPRIOT_DEVICE="Nvidia ShieldTV"
 QEMU_ARCH="aarch64"
-SDIMAGE_DIR="/sdimage"
-SDIMAGE_PATH="/sdimage/sdimage.img"
-SDIMAGE_ROOTFS="/sdimage/rootfs"
-SDIMAGE_ZIP="/data/sdimage.img.zip"
-SDIMAGE_GZ="/data/sdimage.img.gz"
+WORK_DIR="/workdir"
+SD_IMAGE_NAME="hypriot-nvidia-shieldtv.img"
+SD_IMAGE_PATH="/workdir/${SD_IMAGE_NAME}"
+SD_IMAGE_ROOTFS="/workdir/rootfs"
+SD_IMAGE_ZIP="/data/${SD_IMAGE_NAME}.zip"
 ROOTFS_TAR="rootfs-arm64.tar.gz"
-SD_CARD_SIZE="50" # in MByte
+SD_CARD_SIZE="400" # in MByte
+
+# Tell Linux how to start binaries that need emulation to use Qemu
+update-binfmts --enable qemu-${QEMU_ARCH}
 
 # Cleanup
 mkdir -p /data
-rm -fr "${SDIMAGE_DIR}"
+rm -fr "${WORK_DIR}"
 
 # Create image dir
-mkdir -p "${SDIMAGE_DIR}"
-pushd "${SDIMAGE_DIR}"
-echo "sd-image" > image-release.txt
-popd
+mkdir -p "${WORK_DIR}"
+
+# Download basic rootfs
+if [ ! -f "/data/${ROOTFS_TAR}" ]; then
+  wget -q https://github.com/hypriot/os-rootfs/releases/download/v0.4/${ROOTFS_TAR} -O "/data/${ROOTFS_TAR}"
+fi
 
 # Create empty ROOTFS image file
 # - SD_CARD_SIZE in MByte
@@ -38,10 +43,10 @@ ROOTFS_SIZE=$(expr ${SD_MINUS_DD} / 512 - ${ROOTFS_START})
 
 #++++
 # create image file with 0's
-dd if=/dev/zero of=${SDIMAGE_PATH} bs=1MB count=${SD_CARD_SIZE}
+dd if=/dev/zero of=${SD_IMAGE_PATH} bs=1MB count=${SD_CARD_SIZE}
 # create loopback device
-DEVICE=$(losetup -f --show ${SDIMAGE_PATH})
-echo "Image ${SDIMAGE_PATH} created and mounted as ${DEVICE}."
+DEVICE=$(losetup -f --show ${SD_IMAGE_PATH})
+echo "Image ${SD_IMAGE_PATH} created and mounted as ${DEVICE}."
 # create partions
 sfdisk --force ${DEVICE} <<PARTITION
 unit: sectors
@@ -55,68 +60,61 @@ PARTITION
 losetup -d $DEVICE
 losetup -a
 # check partitions
-fdisk -l ${SDIMAGE_PATH}
+fdisk -l ${SD_IMAGE_PATH}
 #---
 
 #+++
 # format image file
-DEVICE=`kpartx -va ${SDIMAGE_PATH} | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
+DEVICE=`kpartx -va ${SD_IMAGE_PATH} | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
 # details see: https://github.com/NaohiroTamura/diskimage-builder/blob/master/elements/vm/block-device.d/10-partition#L39-L43
 dmsetup --noudevsync mknodes
-rootp="/dev/mapper/${DEVICE}p1"
+ROOT_PARTITION="/dev/mapper/${DEVICE}p1"
 DEVICE="/dev/${DEVICE}"
 
 # Give some time to system to refresh
 #sleep 3
 
 # create file system
-mkfs.ext4 ${rootp} -L root -i 4096 # create 1 inode per 4kByte block (maximum ratio is 1 per 1kByte)
+mkfs.ext4 ${ROOT_PARTITION} -L root -i 4096 # create 1 inode per 4kByte block (maximum ratio is 1 per 1kByte)
 
 # mount file system
-mkdir -p ${SDIMAGE_ROOTFS}
-mount ${rootp} ${SDIMAGE_ROOTFS}
+mkdir -p ${SD_IMAGE_ROOTFS}
+mount ${ROOT_PARTITION} ${SD_IMAGE_ROOTFS}
 df -lh
 
 #---xxx---
-# modify file system
-pushd "${SDIMAGE_ROOTFS}"
-echo "sd-card-image" > image-release.txt
-popd
+# unpack basic rootfs
+tar -xzf "/data/${ROOTFS_TAR}" -C "${SD_IMAGE_ROOTFS}/"
 
+# modify file system
+pushd "${SD_IMAGE_ROOTFS}"
+
+echo "sd-card-image" > ./image-release.txt
+
+mkdir -p "${SD_IMAGE_ROOTFS}/etc"
+echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" >> ./etc/os-release
+
+# determine SD card image size
+df -lh
+
+popd
 #---xxx---
 
 # unmount file system
-umount ${SDIMAGE_ROOTFS}
+umount ${SD_IMAGE_ROOTFS}
 # remove /dev/mapper device
-#kpartx -vds ${SDIMAGE_PATH} || true
+#kpartx -vds ${SD_IMAGE_PATH} || true
 #sleep 5
-kpartx -vds ${SDIMAGE_PATH}
+kpartx -vds ${SD_IMAGE_PATH}
+
+# Check loopback devices
+losetup -a
 #---
 
 
-# Tell Linux how to start binaries that need emulation to use Qemu
-update-binfmts --enable qemu-${QEMU_ARCH}
-
-# Import basic rootfs
-pushd /data
-if [ ! -f "${ROOTFS_TAR}" ]; then
-  wget -q https://github.com/hypriot/os-rootfs/releases/download/v0.4/${ROOTFS_TAR}
-fi
-popd
-# Unpack basic rootfs
-#tar -xzf "/data/${ROOTFS_TAR}" -C "${SDIMAGE_DIR}/"
-# Determine SD card image size
-du -sh "${SDIMAGE_DIR}/"
-
-#echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" | chroot "${SDIMAGE_DIR}/" \
-#  tee -a /etc/os-release
-mkdir -p "${SDIMAGE_DIR}/etc"
-echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" | tee -a "${SDIMAGE_DIR}/etc/os-release"
-
-# Package rootfs tarball
+# Package and compress SD image file
 umask 0000
-tar -czf "${SDIMAGE_ZIP}" -C "${SDIMAGE_DIR}/" .
-gzip -c "${SDIMAGE_PATH}" > "${SDIMAGE_GZ}"
+pigz --zip -c "${SD_IMAGE_PATH}" > "${SD_IMAGE_ZIP}"
 
-# Test if rootfs is OK
+# Test if SD image file is OK
 /test.sh
