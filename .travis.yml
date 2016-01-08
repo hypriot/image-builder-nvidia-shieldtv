@@ -8,7 +8,7 @@ deploy:
   provider: releases
   skip_cleanup: true
   file:
-    - sdimage.img.zip
+    - hypriot-nvidia-shieldtv.img.zip
   on:
     tags: true
     repo: hypriot/image-builder-nvidia-shieldtv
