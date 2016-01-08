@@ -13,8 +13,9 @@ SDIMAGE_DIR="/sdimage"
 SDIMAGE_PATH="/sdimage/sdimage.img"
 SDIMAGE_ROOTFS="/sdimage/rootfs"
 SDIMAGE_ZIP="/data/sdimage.img.zip"
+SDIMAGE_GZ="/data/sdimage.img.gz"
 ROOTFS_TAR="rootfs-arm64.tar.gz"
-SD_CARD_SIZE="400" # in MByte
+SD_CARD_SIZE="50" # in MByte
 
 # Cleanup
 mkdir -p /data
@@ -60,11 +61,13 @@ fdisk -l ${SDIMAGE_PATH}
 #+++
 # format image file
 DEVICE=`kpartx -va ${SDIMAGE_PATH} | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
+# details see: https://github.com/NaohiroTamura/diskimage-builder/blob/master/elements/vm/block-device.d/10-partition#L39-L43
+dmsetup --noudevsync mknodes
 rootp="/dev/mapper/${DEVICE}p1"
 DEVICE="/dev/${DEVICE}"
 
 # Give some time to system to refresh
-sleep 3
+#sleep 3
 
 # create file system
 mkfs.ext4 ${rootp} -L root -i 4096 # create 1 inode per 4kByte block (maximum ratio is 1 per 1kByte)
@@ -76,13 +79,17 @@ df -lh
 
 #---xxx---
 # modify file system
+pushd "${SDIMAGE_ROOTFS}"
+echo "sd-card-image" > image-release.txt
+popd
+
 #---xxx---
 
 # unmount file system
 umount ${SDIMAGE_ROOTFS}
 # remove /dev/mapper device
-kpartx -vds ${SDIMAGE_PATH} || true
-sleep 5
+#kpartx -vds ${SDIMAGE_PATH} || true
+#sleep 5
 kpartx -vds ${SDIMAGE_PATH}
 #---
 
@@ -97,16 +104,19 @@ if [ ! -f "${ROOTFS_TAR}" ]; then
 fi
 popd
 # Unpack basic rootfs
-tar -xzf "/data/${ROOTFS_TAR}" -C "${SDIMAGE_DIR}/"
+#tar -xzf "/data/${ROOTFS_TAR}" -C "${SDIMAGE_DIR}/"
 # Determine SD card image size
 du -sh "${SDIMAGE_DIR}/"
 
-echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" | chroot "${SDIMAGE_DIR}/" \
-  tee -a /etc/os-release
+#echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" | chroot "${SDIMAGE_DIR}/" \
+#  tee -a /etc/os-release
+mkdir -p "${SDIMAGE_DIR}/etc"
+echo "HYPRIOT_DEVICE=\"${HYPRIOT_DEVICE}\"" | tee -a "${SDIMAGE_DIR}/etc/os-release"
 
 # Package rootfs tarball
 umask 0000
 tar -czf "${SDIMAGE_ZIP}" -C "${SDIMAGE_DIR}/" .
+gzip -c "${SDIMAGE_PATH}" > "${SDIMAGE_GZ}"
 
 # Test if rootfs is OK
 /test.sh
