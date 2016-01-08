@@ -1,13 +1,16 @@
 sudo: required
 services:
-- docker
+  - docker
 language: bash
 script:
-- make image
+  - make image
 deploy:
   provider: releases
+  skip_cleanup: true
+  file:
+    - sdimage.img.zip
+  on:
+    tags: true
+    repo: hypriot/image-builder-nvidia-shieldtv
   api_key:
     secure: YScghpjK0r4vnIOPiN9OreJ8rgLN8yeN9Lale7SNEu4E02qzpgv/irYT4bYXRee9xPzi+Il0xwA2A2uhfHzATbGNkVjK4pfkbTwIs3dUvoI8ydBaaNnxIOjn3SGiYNE0Mci+yxuchP8P95UDyILxs2Rn3Ii+i9Pk6F/1WJy+2YXMQljxTyVYktdh+pnKBLqEkmuW6qwGcJSG0pYZyT28MYHiJGNyQGCmqOGjx0itgB/Hz8nUByHU53Xn1LP7CRxvL54BkkVaZShqIYLYtf2PtYK7Tx9t/gRjDy3i9oHV3gT8KqU8JyJ+qCi6Uv1VLHQM5tmf+hZsSvwMHmPpmRk4BOMyR7+Zw/H1rCZ1UwknPymAhrfEefIPmUbM86cP3o6xYC7jaPULcviJLuyTmee8aK/WjDfMyyzgRSY/HSW3bKvy3iovMI7BDJq/z4OhHbtpKvDyGX7mMlVVNi20b3kxpaY1/9MSL+poSrdSWd/sPb54g6wfXNeoGLReR0EBsn+6CVHBybbV7USqmEAghJT+gLGQzrGt7ACausMX0QzRR+WE243KD2hmWu1hIRxvhahRDft8nPFLJ6qQppukpGyhjgsFVOEgjs46R0wTuG0dHZTSrcS/lOz5x5x8k59qD6B7Q4PsvatCBDBjXIfwLc7/mw1eSzIMDlRSu5iNrUtng1o=
-  file: sdimage.img.zip
-  on:
-    repo: hypriot/image-builder-nvidia-shieldtv
