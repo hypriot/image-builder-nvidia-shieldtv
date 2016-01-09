@@ -1,4 +1,4 @@
 *.img
-*.img.gz
 *.img.zip
 *.tar.gz
+.vagrant/
