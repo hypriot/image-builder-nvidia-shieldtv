@@ -13,18 +13,14 @@ describe "SD-Card Image" do
   context "Partition table" do
     let(:stdout) { command("guestfish add #{image_path} : run : list-filesystems").stdout }
 
-    it "has two partitions" do
+    it "has one partition" do
       partitions = stdout.split(/\r?\n/)
 
-      expect(partitions.size).to be 2
-    end
-
-    it "has a boot-partition with a vfat filesystem" do
-      expect(stdout).to contain('sda1: vfat')
+      expect(partitions.size).to be 1
     end
 
     it "has a root-partition with a ext4 filesystem" do
-      expect(stdout).to contain('sda2: ext4')
+      expect(stdout).to contain('sda1: ext4')
     end
   end
 end

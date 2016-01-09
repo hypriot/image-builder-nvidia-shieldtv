@@ -24,16 +24,15 @@ IMAGE_NAME="sd-card-nvidia-shieldtv.img"
 
 # size of root and boot partion
 ROOT_PARTITION_SIZE="400M"
-BOOT_PARTITION_SIZE="64M"
 
 # download our base root file system
 if [ ! -f "${ROOTFS_TAR_PATH}" ]; then
   wget -q -O ${ROOTFS_TAR_PATH} https://github.com/hypriot/os-rootfs/releases/download/v0.4/${ROOTFS_TAR}
 fi
 
-# create the image and add root base filesystem
-guestfish -N /${IMAGE_NAME}=bootroot:vfat:ext4:${ROOT_PARTITION_SIZE}:${BOOT_PARTITION_SIZE} <<_EOF_
-        mount /dev/sda2 /
+# create the image and add a single ext4 filesystem
+guestfish -N /${IMAGE_NAME}=fs:ext4:${ROOT_PARTITION_SIZE} <<_EOF_
+        mount /dev/sda1 /
         tar-in ${ROOTFS_TAR_PATH} / compress:gzip
 _EOF_
 
