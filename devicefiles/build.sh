@@ -47,27 +47,13 @@ mount -o bind /dev/pts "${BUILD_PATH}/dev/pts"
 mount -t proc none "${BUILD_PATH}/proc"
 mount -t sysfs none "${BUILD_PATH}/sys"
 
-# make our build directory the current root
-# and install additional packages
-chroot ${BUILD_PATH} /bin/bash <<"EOF"
-# set up /etc/resolv.conf
-export DEST=$(readlink -m /etc/resolv.conf)
-mkdir -p $(dirname $DEST)
-echo "nameserver 8.8.8.8" > $DEST
+# modify image in chroot environment
+chroot ${BUILD_PATH} /bin/bash </devicefiles/chroot-script.sh
 
-# install parted (for online disk resizing)
-apt-get update
-apt-get install -y parted
-
-# set device label
-echo 'HYPRIOT_DEVICE="NVIDIA ShieldTV"' >> /etc/os-release
-exit
-EOF
-
+umount -l "${BUILD_PATH}/sys" || true
+umount -l "${BUILD_PATH}/proc" || true
 umount -l "${BUILD_PATH}/dev/pts" || true
 umount -l "${BUILD_PATH}/dev" || true
-umount -l "${BUILD_PATH}/proc" || true
-umount -l "${BUILD_PATH}/sys" || true
 
 # package image rootfs
 tar -czf "${IMAGE_ROOTFS_PATH}" -C "${BUILD_PATH}" .
@@ -98,7 +84,7 @@ EOF
 fdisk -l /${IMAGE_NAME}
 
 # test sd-image that we have built
-rspec --format documentation --color /test
+rspec --format documentation --color /devicefiles/test
 
 # ensure that the travis-ci user can access the sd-card image file
 umask 0000
