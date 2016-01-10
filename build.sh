@@ -23,7 +23,7 @@ KERNEL_VERSION=${KERNEL_VERSION:="4.1.12"}
 IMAGE_NAME="sd-card-nvidia-shieldtv.img"
 
 # size of root and boot partion
-ROOT_PARTITION_SIZE="400M"
+ROOT_PARTITION_SIZE="800M"
 
 # download our base root file system
 if [ ! -f "${ROOTFS_TAR_PATH}" ]; then
@@ -31,10 +31,29 @@ if [ ! -f "${ROOTFS_TAR_PATH}" ]; then
 fi
 
 # create the image and add a single ext4 filesystem
-guestfish -N /${IMAGE_NAME}=fs:ext4:${ROOT_PARTITION_SIZE} <<_EOF_
-        mount /dev/sda1 /
-        tar-in ${ROOTFS_TAR_PATH} / compress:gzip
-_EOF_
+# --- important settings for NVIDIA ShieldTV SD card
+# - initialise the partion with MBR
+# - use start sector 2048, this reserves 1MByte of disk space
+# - don't set the partition to "bootable"
+# - format the disk with ext4
+# for debugging use 'set-verbose true'
+#set-verbose true
+guestfish <<EOF
+# create new image disk
+sparse /${IMAGE_NAME} ${ROOT_PARTITION_SIZE}
+run
+part-init /dev/sda mbr
+part-add /dev/sda primary 2048 -1
+part-set-bootable /dev/sda 1 false
+mkfs ext4 /dev/sda1
+
+# import base rootfs
+mount /dev/sda1 /
+tar-in ${ROOTFS_TAR_PATH} / compress:gzip
+EOF
+
+# log image partioning
+fdisk -l /${IMAGE_NAME}
 
 # test sd-image that we have built
 rspec --format documentation --color /${BUILD_RESULT}/test
