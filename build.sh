@@ -102,7 +102,7 @@ EOF
 fdisk -l /${IMAGE_NAME}
 
 # test sd-image that we have built
-rspec --format documentation --color ${BUILD_RESULT_PATH}/test
+rspec --format documentation --color /test
 
 # ensure that the travis-ci user can access the sd-card image file
 umask 0000

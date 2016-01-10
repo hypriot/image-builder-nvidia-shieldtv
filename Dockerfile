@@ -26,6 +26,7 @@ RUN gem update --system && \
     gem install --no-document bundler
 
 COPY build.sh /build.sh
+COPY test/ /test/
 
 # build sd card image
 CMD /build.sh
