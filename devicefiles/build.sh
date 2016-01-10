@@ -47,8 +47,13 @@ mount -o bind /dev/pts "${BUILD_PATH}/dev/pts"
 mount -t proc none "${BUILD_PATH}/proc"
 mount -t sysfs none "${BUILD_PATH}/sys"
 
+#---modify image---
 # modify image in chroot environment
 chroot ${BUILD_PATH} /bin/bash </devicefiles/chroot-script.sh
+
+# modify/add image files directly
+cp /devicefiles/resize-disk.sh "${BUILD_PATH}/root/"
+#---modify image---
 
 umount -l "${BUILD_PATH}/sys" || true
 umount -l "${BUILD_PATH}/proc" || true
