@@ -1,6 +1,9 @@
 #!/bin/bash -e
 set -x
 
+# sd card device name for NVIDIA ShieldTV
+SDCARD_DEVICE="/dev/mmcblk1"
+
 # install parted, if its not there
 if [ -z $(which parted) ]; then
   apt-get update
@@ -11,11 +14,11 @@ fi
 df -h
 
 # get partition number
-PART_NUM=$(parted /dev/mmcblk1 -ms unit s p | tail -n 1 | cut -f 1 -d:)
+PART_NUM=$(parted $SDCARD_DEVICE -ms unit s p | tail -n 1 | cut -f 1 -d:)
 echo $PART_NUM
 
 # get partition start sector
-PART_START=$(parted /dev/mmcblk1 -ms unit s p | grep ^$PART_NUM | cut -f 2 -d:)
+PART_START=$(parted $SDCARD_DEVICE -ms unit s p | grep ^$PART_NUM | cut -f 2 -d:)
 echo $PART_START
 
 # remove trailing "s"
@@ -24,7 +27,7 @@ echo $PART_START
 
 # change partition table for resizing to maximum
 set +e
-fdisk /dev/mmcblk1 <<EOF
+fdisk $SDCARD_DEVICE <<EOF
 p
 d
 p
@@ -40,7 +43,7 @@ set -e
 
 # apply online resizing
 partprobe
-/sbin/resize2fs /dev/mmcblk1p1
+/sbin/resize2fs ${SDCARD_DEVICE}p${PART_NUM}
 
 # show disk usage after changes
 df -h

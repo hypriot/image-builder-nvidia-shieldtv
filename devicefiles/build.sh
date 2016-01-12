@@ -49,7 +49,7 @@ mount -t sysfs none $BUILD_PATH/sys
 
 #---modify image---
 # modify/add image files directly
-cp /devicefiles/resize-disk.sh $BUILD_PATH/root/
+cp /devicefiles/resize-disk-nvidia-shieldtv.sh $BUILD_PATH/root/
 
 #FIXME: create dedicated Hypriot .deb package
 # install bash prompt as skeleton files (root and default for all new users)
