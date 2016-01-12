@@ -12,14 +12,6 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 apt-get update
 
-#FIXME: has to be moved to hypriot/os-rootfs
-# install parted (for online disk resizing)
-apt-get install -y parted
-
-#FIXME: has to be moved to hypriot/os-rootfs
-# install sudo (for our default user)
-apt-get install -y sudo
-
 # install Hypriot group and user
 addgroup --system --quiet $HYPRIOT_GROUPNAME
 useradd -m $HYPRIOT_USERNAME --group $HYPRIOT_GROUPNAME --shell /bin/bash
