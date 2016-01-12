@@ -13,10 +13,6 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 apt-get update
 
 #FIXME: has to be moved to hypriot/os-rootfs
-# upgrade to latest Debian package versions
-apt-get upgrade -y
-
-#FIXME: has to be moved to hypriot/os-rootfs
 # install parted (for online disk resizing)
 apt-get install -y parted
 
