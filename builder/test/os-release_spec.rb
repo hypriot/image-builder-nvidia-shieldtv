@@ -21,7 +21,7 @@ describe "Root filesystem" do
     end
     it "has a HYPRIOT_DEVICE= entry" do
       expect(stdout).to contain('^HYPRIOT_DEVICE=')
-    end    
+    end
 
     it "is for architecure 'HYPRIOT_OS=\"HypriotOS/arm64\"'" do
       expect(stdout).to contain('^HYPRIOT_OS="HypriotOS/arm64"$')
