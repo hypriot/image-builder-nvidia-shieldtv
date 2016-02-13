@@ -28,7 +28,7 @@ Now set the Docker environments to this new docker machine:
 eval $(docker-machine env image-builder-nvidia-shieldtv)
 ```
 
-From here just use `make` to make a new SD-Card image:
+From here just use `make` to make a new SD card image:
 
 ```bash
 make sd-image

@@ -1,7 +1,7 @@
 require 'serverspec'
 set :backend, :exec
 
-describe "SD-Card Image" do
+describe "SD card image" do
   let(:image_path) { return '/sd-card-nvidia-shieldtv.img' }
 
   it "exists" do
