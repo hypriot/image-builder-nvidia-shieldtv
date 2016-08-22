@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/hypriot/image-builder-nvidia-shieldtv.svg)](https://travis-ci.org/hypriot/image-builder-nvidia-shieldtv)
 
 
-**! Please note: This work is deprecated and will not be continued at least in the near future. Nevertheless, everyone is welcome to contribute to this work.**
+**! Please note: This work will not be continued at least in the near future. Nevertheless, everyone is welcome to contribute to this work.**
 
 # Setting up build environment
 Make sure you have [vagrant](https://docs.vagrantup.com/v2/installation/) and [docker-machine](https://docs.docker.com/machine/install-machine/) installed.
